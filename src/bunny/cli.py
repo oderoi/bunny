@@ -1,111 +1,46 @@
 import click
 import os
-import sys
-import glob  # For safe str-based scanning
-import struct  # For header check
+import subprocess
+import requests
+import time
 from pathlib import Path
 from contextlib import redirect_stdout, redirect_stderr
+import socket
 
-# Suppress logs
-os.environ['GGML_VERBOSE'] = '0'
+# Suppress logs if needed
 os.environ['LLAMA_CPP_VERBOSE'] = '0'
 
-# Lazy import
-def get_llama():
-    try:
-        from llama_cpp import Llama
-        return Llama
-    except ImportError:
-        raise ImportError("llama-cpp-python missing. Run 'python install.py'.")
-
 from huggingface_hub import hf_hub_download
+from .models import MODEL_REGISTRY, MODEL_DIR, is_valid_gguf, find_model_file
 
-# Registry (BitNet: Native i2_s, flag for fork)
-MODEL_REGISTRY = {
-    "tinyllama": {
-        "repo_id": "TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF",
-        "filename": "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
-        "chat_format": "chatml"
-    },
-    "bitnet": {
-        "repo_id": "microsoft/bitnet-b1.58-2B-4T-gguf",
-        "filename": "ggml-model-i2_s.gguf",
-        "chat_format": "chatml",
-        "requires_special": True  # Needs bitnet.cpp for 1-bit
-    },
-    "deepseek-r1": {
-        "repo_id": "unsloth/DeepSeek-R1-GGUF",
-        "filename": "DeepSeek-R1.Q4_K_M.gguf",
-        "chat_format": "chatml"
-    },
-    "phi3": {
-        "repo_id": "microsoft/Phi-3-mini-4k-instruct-gguf",
-        "filename": "Phi-3-mini-4k-instruct-q4.gguf",
-        "chat_format": "chatml"
-    },
-    "llama3": {
-        "repo_id": "bartowski/Meta-Llama-3-8B-Instruct-GGUF",
-        "filename": "Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
-        "chat_format": "llama3"
-    },
-    "mistral": {
-        "repo_id": "TheBloke/Mistral-7B-Instruct-v0.1-GGUF",
-        "filename": "mistral-7b-instruct-v0.1.Q4_K_M.gguf",
-        "chat_format": "chatml"
-    },
-    "gemma3-270m": {
-        "repo_id": "unsloth/gemma-3-270m-it-GGUF",
-        "filename": "gemma-3-270m-it-Q4_K_M.gguf",
-        "chat_format": "chatml"
-    },
-    "gemma3-1b": {
-        "repo_id": "unsloth/gemma-3-1b-it-GGUF",
-        "filename": "gemma-3-1b-it-Q4_K_M.gguf",
-        "chat_format": "chatml"
-    }
-}
+# Path to llama-server binary
+BUNNY_DIR = Path.home() / ".bunny"
+LLAMA_BIN = BUNNY_DIR / "llama.cpp" / "build" / "bin" / "llama-server"
+if os.name == 'nt':  # Windows
+    LLAMA_BIN = BUNNY_DIR / "llama.cpp" / "build" / "Release" / "llama-server.exe"
 
-MODEL_DIR = Path.home() / ".bunny" / "models"
-MODEL_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def is_valid_gguf(path):
-    """Fast header check: GGUF magic b'GGUF'."""
-    try:
-        with open(path, 'rb') as f:
-            header = f.read(4)
-            return header == b'GGUF'
-    except:
-        return False
-
-
-def find_model_file(model_name, expected_filename=None, use_fallback=True):
-    """Safe scan: Exact first, then model-specific glob."""
-    dir_str = str(MODEL_DIR)
-    # Exact match
-    if expected_filename:
-        local_path = MODEL_DIR / expected_filename
-        if local_path.exists() and is_valid_gguf(local_path):
-            return local_path
-
-    if not use_fallback:
-        return None
-
-    # Model-specific fallback (no cross-match)
-    pattern = f"{dir_str}/*{model_name}*.gguf"
-    candidates_str = glob.glob(pattern)
-    candidates = [Path(c) for c in candidates_str if is_valid_gguf(Path(c))]
-    if candidates:
-        click.echo(click.style(f"Using alt: {candidates[0].name}", fg="yellow"))
-        return candidates[0]
-    return None
-
+def check_server_ready(host='127.0.0.1', port=8080, timeout=30):
+    """Poll until server is ready."""
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            result = sock.connect_ex((host, port))
+            sock.close()
+            if result == 0:
+                return True
+        except:
+            pass
+        time.sleep(0.5)
+    return False
 
 @click.group()
 def main():
-    """Bunny: Any GGUF, blazing fast."""
-    pass
-
+    """Bunny: Any GGUF, blazing fast with llama.cpp."""
+    if not LLAMA_BIN.exists():
+        click.echo(click.style("⚠ llama-server not found. Run 'python install.py' to build.", fg="yellow"))
+        raise click.Abort()
 
 @main.command()
 @click.argument("model")
@@ -154,28 +89,121 @@ def pull(model, repo, file):
     except Exception as e:
         click.echo(click.style(f"Failed: {e}", fg="red"))
 
-
 @main.command()
 def list():
     """List models."""
     click.echo("Models:")
     for model_name in MODEL_REGISTRY:
         info = MODEL_REGISTRY[model_name]
-        path = find_model_file(model_name, info["filename"], use_fallback=True)  # Full detect
+        path = find_model_file(model_name, info["filename"], use_fallback=True)
         status = "✓" if path else "○"
         click.echo(f"  {model_name}: {status}")
-
 
 @main.command()
 @click.argument("model")
 @click.option("--ctx-size", default=2048, help="Context.")
 @click.option("--max-tokens", default=256, help="Max output.")
 def run(model, ctx_size, max_tokens):
-    """Run any GGUF."""
+    """Run any GGUF with llama.cpp server."""
     # Custom scan
     if model not in MODEL_REGISTRY:
         path = find_model_file(model)
-        info = {"chat_format": None}
+        chat_template = None
+    else:
+        info = MODEL_REGISTRY[model]
+        path = find_model_file(model, info["filename"])
+        chat_template = info.get("chat_format")
+
+    if not path:
+        click.echo(click.style(f"No valid {model}.gguf. Pull or drop in ~/.bunny/models/.", fg="red"))
+        return
+
+    if info.get("requires_special"):
+        click.echo(click.style(f"⚠ {model} needs special backend (bitnet.cpp): https://github.com/microsoft/BitNet", fg="yellow"))
+        return
+
+    # Server args (auto-detect chat format from metadata)
+    args = [
+        str(LLAMA_BIN),
+        "-m", str(path),
+        "--host", "127.0.0.1",
+        "--port", "8080",
+        "--ctx-size", str(ctx_size),
+        "-ngl", "-1",  # All layers on GPU
+        "--threads", str(os.cpu_count() or 4),
+    ]
+
+    # Start server silently
+    devnull = open(os.devnull, 'w')
+    try:
+        with redirect_stdout(devnull), redirect_stderr(devnull):
+            server = subprocess.Popen(args, stdout=devnull, stderr=devnull)
+    except Exception as e:
+        devnull.close()
+        click.echo(click.style(f"Server start failed: {e}", fg="red"))
+        return
+
+    # Wait for ready
+    if not check_server_ready():
+        server.terminate()
+        click.echo(click.style("Server failed to start—check model/GPU.", fg="red"))
+        return
+
+    click.echo(click.style(f"🚀 {model} ready (llama.cpp). /exit quit, /clear reset.", fg="green"))
+    click.echo("-" * 50)
+
+    messages = [{"role": "system", "content": "You are a helpful assistant."}]
+    try:
+        while True:
+            user_input = click.prompt("You", type=str).strip()
+            if user_input.lower() == "/exit":
+                break
+            if user_input.lower() == "/clear":
+                messages = [{"role": "system", "content": "You are a helpful assistant."}]
+                click.echo("Cleared.")
+                continue
+
+            messages.append({"role": "user", "content": user_input})
+            if len(messages) > 17:
+                messages = messages[-17:]
+
+            try:
+                payload = {
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "temperature": 0.7,
+                    "stream": False,
+                    "stop": ["Human:", "\n\n"]
+                }
+                response = requests.post("http://127.0.0.1:8080/v1/chat/completions", json=payload)
+                response.raise_for_status()
+                data = response.json()
+                content = data["choices"][0]["message"]["content"].strip()
+                messages.append({"role": "assistant", "content": content})
+                click.echo(f"Model: {content}")
+                click.echo("-" * 50)
+            except Exception as e:
+                click.echo(click.style(f"Gen error: {e}", fg="red"))
+    except KeyboardInterrupt:
+        click.echo("\nBye!")
+    finally:
+        server.terminate()
+        try:
+            devnull.close()
+        except:
+            pass
+
+@main.command()
+@click.argument("model")
+@click.option("--ctx-size", default=2048, help="Context.")
+@click.option("--port", default=8080, type=int, help="Server port.")
+@click.option("--no-browser", is_flag=True, help="Don't open web UI in browser (headless mode).")
+def serve(model, ctx_size, port, no_browser):
+    """Serve model via llama.cpp built-in web UI."""
+    # Custom scan (same as run)
+    if model not in MODEL_REGISTRY:
+        path = find_model_file(model)
+        info = {"requires_special": False}
     else:
         info = MODEL_REGISTRY[model]
         path = find_model_file(model, info["filename"])
@@ -186,72 +214,53 @@ def run(model, ctx_size, max_tokens):
 
     if info.get("requires_special"):
         click.echo(click.style(f"⚠ {model} needs special backend (bitnet.cpp): https://github.com/microsoft/BitNet", fg="yellow"))
-        click.echo("Clone & install: git clone https://github.com/microsoft/BitNet; cd BitNet; pip install -e .")
         return
 
-    # Silent load
+    # Server args (llama.cpp built-in UI)
+    args = [
+        str(LLAMA_BIN),
+        "-m", str(path),
+        "--host", "0.0.0.0",  # Bind to all interfaces for remote access
+        "--port", str(port),
+        "--ctx-size", str(ctx_size),
+        "-ngl", "-1",  # All layers on GPU
+        "--threads", str(os.cpu_count() or 4),
+    ]
+
+    click.echo(f"🚀 Starting {model} server on http://0.0.0.0:{port}...")
     devnull = open(os.devnull, 'w')
     try:
         with redirect_stdout(devnull), redirect_stderr(devnull):
-            Llama = get_llama()
-            llm = Llama(
-                str(path),
-                n_ctx=ctx_size,
-                n_gpu_layers=-1,
-                chat_format=info.get("chat_format"),
-                verbose=False,
-                n_threads=os.cpu_count() or 4
-            )
+            server = subprocess.Popen(args, stdout=devnull, stderr=devnull)
     except Exception as e:
         devnull.close()
-        click.echo(click.style(f"Load failed: {e}", fg="red"))
-        if "bitnet" in model.lower():
-            click.echo("Tip: bitnet.cpp fork required for native 1-bit. Alt: Q4 quants.")
-        else:
-            click.echo("Tip: Verify GGUF header (head -c 4 ~/.bunny/models/*.gguf | hexdump -C | grep '6767').")
+        click.echo(click.style(f"Server start failed: {e}", fg="red"))
         return
+
+    # Wait for ready
+    if not check_server_ready(host='127.0.0.1', port=port):
+        server.terminate()
+        click.echo(click.style("Server failed to start—check model/port.", fg="red"))
+        return
+
+    click.echo(click.style(f"✓ Server ready! UI: http://127.0.0.1:{port}", fg="green"))
+    if not no_browser:
+        click.echo(click.style("Opening llama.cpp web UI...", fg="green"))
+        import webbrowser
+        webbrowser.open(f'http://127.0.0.1:{port}')
+    else:
+        click.echo(click.style("(Headless mode: Access at http://<your-ip>:{port})", fg="yellow"))
+
+    try:
+        server.wait()
+    except KeyboardInterrupt:
+        click.echo("\nShutting down server...")
     finally:
+        server.terminate()
         try:
             devnull.close()
         except:
             pass
-
-    click.echo(click.style(f"🚀 {model} ready. /exit quit, /clear reset.", fg="green"))
-    click.echo("-" * 50)
-
-    messages = [{"role": "system", "content": "You are a helpful assistant."}]
-    while True:
-        try:
-            user_input = click.prompt("You", type=str).strip()
-        except KeyboardInterrupt:
-            click.echo("\nBye!")
-            break
-        if user_input.lower() == "/exit":
-            break
-        if user_input.lower() == "/clear":
-            messages = [{"role": "system", "content": "You are a helpful assistant."}]
-            click.echo("Cleared.")
-            continue
-
-        messages.append({"role": "user", "content": user_input})
-        if len(messages) > 17:
-            messages = messages[-17:]
-
-        try:
-            output = llm.create_chat_completion(
-                messages,
-                max_tokens=max_tokens,
-                stop=["Human:", "\n\n"],
-                temperature=0.7,
-                stream=False
-            )
-            response = output["choices"][0]["message"]["content"].strip()
-            messages.append({"role": "assistant", "content": response})
-            click.echo(f"Model: {response}")
-            click.echo("-" * 50)
-        except Exception as e:
-            click.echo(click.style(f"Gen error: {e}", fg="red"))
-
 
 if __name__ == "__main__":
     main()

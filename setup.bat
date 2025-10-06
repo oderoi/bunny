@@ -1,12 +1,12 @@
 @echo off
-REM Run: setup.bat (in Command Prompt or PowerShell)
+REM Bunny Setup (Windows) - Run in VS 2022 Developer Prompt for best results
 
 echo === Bunny Setup (Windows) ===
-python -m venv bunny_env
+if not exist "bunny_env" python -m venv bunny_env
 call bunny_env\Scripts\activate
 python -m pip install --upgrade pip
 python install.py
-call deactivate  REM Optional; re-activate for use
-echo Done! Activate with: call bunny_env\Scripts\activate
+call deactivate
+echo Done! Activate: call bunny_env\Scripts\activate
 echo Test: b --help
 pause

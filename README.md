@@ -1,59 +1,52 @@
 # Bunny 🐰
 
-Lightweight CLI for GGUF models via llama.cpp. Auto-GPU/CPU.
+Lightweight CLI for GGUF models via **native llama.cpp** (C++). Auto-GPU/CPU, cross-OS. Lower latency than Python bindings.
 
-## One-Command Install (Any OS)
+## Platforms
+- **Desktops/Laptops**: Windows, Ubuntu/Linux, macOS (CPU/GPU/M-chips).
+- **Phones (Mobile App)**: Build llama.cpp for ARM (Android/iOS examples below). Wrap in app (e.g., Flutter + HTTP to local server). Bunny CLI downloads/runs models; port to mobile via FFI.
 
-1. Ensure Python 3.9+ (brew install python on macOS; apt/choco on Linux/Win).
-2. In bunny/ folder:
+## One-Command Install
+1. Python 3.9+ (install via brew/apt/choco).
+2. In `bunny/` folder:
    - **macOS/Linux**: `chmod +x setup.sh && ./setup.sh`
-   - **Windows**: Double-click `setup.bat` (or run in cmd).
+   - **Windows**: Run `setup.bat` in Command Prompt (prefer VS 2022 Developer Prompt for build).
    
-   This creates `bunny_env` venv, installs everything (llama-cpp-python GPU-aware), and sets up `b`.
+   Creates `bunny_env` venv, clones/builds llama.cpp (GPU-aware), installs deps, sets up `b`.
 
-3. Activate venv: `source bunny_env/bin/activate` (macOS/Linux) or `bunny_env\Scripts\activate` (Windows).
+3. Activate: `source bunny_env/bin/activate` (macOS/Linux) or `bunny_env\Scripts\activate` (Windows).
 4. Test: `b --help` | `b list`.
 
-**GPU**: Auto-enabled (Metal on macOS, CUDA on NVIDIA). CPU fallback if no GPU.
+**GPU Auto**: Metal (macOS), CUDA (NVIDIA Linux/Win), CPU fallback. Build ~2-5min.
 
 ## Usage
-- `b pull tinyllama`  # Download
-- `b run llama3`      # Chat (GPU if avail.)
-
-Models in `~/.bunny/models/`. Edit `cli.py` for more.
-
-## Troubleshoot
-- Build fail? macOS: `xcode-select --install`. Linux: `sudo apt install build-essential cmake`. Windows: Visual Studio Build Tools.
-- CUDA version? Edit install.py (e.g., cu121 for 12.1).
-- No venv? Run `python install.py` manually after creating one.
-
-## Troubleshooting macOS
-- Build fail (LLVM/hash error)? The fixed install.py uses system Clang. If persists: `brew uninstall llvm` (temporarily) or use Conda: `conda create -n bunny python=3.12; conda activate bunny; conda install -c conda-forge llama-cpp-python; pip install .`
-- Slow build? Normal (~5min on M1+); GPU speedup post-install.
-- Verify GPU: Run `b run tinyllama`; check Activity Monitor > GPU.
-
-# Bunny 🐰
-
-**Blazing-fast local LLMs**: Pull from HF, run on GPU/CPU. Startup <1s, no daemon bloat. Why Bunny? Instant (beats Ollama's lag), seamless (auto-GPU), tiny (50MB vs 1GB+). Your daily driver.
-
-## Install (One-Shot)
-macOS/Linux: `./setup.sh`
-Windows: `setup.bat`
-
-Activates venv, pulls deps, tunes GPU. Test: `b list`
-
-## Use
-- `b pull tinyllama`  # Instant download
-- `b run tinyllama`   # Silent load, chat NOW (no logs!)
+- `b pull tinyllama`  # Download from HF
+- `b run tinyllama`   # CLI chat (GPU accel)
+- `b serve tinyllama` # llama.cpp built-in web UI (opens browser)
 - `b list`            # Status
 
-Silent & fast: No noise, GPU auto (Metal/CUDA). Caps history for speed.
+Serve: Starts OpenAI API at http://0.0.0.0:8080/v1/chat/completions + built-in UI. Headless: `--no-browser`.
 
-Models: Edit `cli.py`. More? PRs welcome!
+Models: `~/.bunny/models/`. Edit `src/bunny/models.py` for more. Binary: `~/.bunny/llama.cpp/build/bin/llama-server`.
 
-## Why Not Ollama?
-- **Speed**: No server spin-up; direct run.
-- **Ease**: HF pulls, no Modelfile hassle.
-- **Light**: Fits anywhere; cross-OS magic.
+## Mobile (Phones)
+Bunny CLI is desktop-focused. For phones:
+- **Android**: `git clone https://github.com/ggerganov/llama.cpp; cd llama.cpp/examples/android` → Build in Android Studio. Load GGUF from Bunny-pulled models via ADB. Or use [MLC Chat](https://mlc.ai/) app (GGUF support).
+- **iOS**: `llama.cpp/examples/ios` → Xcode build for M-chips. Integrate with SwiftUI app.
+- **Cross-Mobile App Idea**: Use Flutter + dart:ffi to call llama.cpp lib, or HTTP to local server (run Bunny on tethered laptop). PRs for mobile wrapper welcome!
 
-Bunny: Because LLMs should hop, not crawl. 🚀
+## Troubleshoot
+- **Build Fail**:
+  - macOS: `xcode-select --install; brew install cmake git`.
+  - Linux: `sudo apt install git cmake build-essential` (CUDA: install toolkit).
+  - Windows: Install Visual Studio 2022 (C++), CMake, Git. Run in "Developer Command Prompt".
+- **No GPU**: Fallback to CPU. Verify: `nvidia-smi` (Linux/Win) or Activity Monitor (macOS).
+- **Server Port**: Uses 8080; kill if conflicted (`lsof -i :8080`).
+- **Models**: Ensure GGUF has chat template metadata for best chat.
+
+## Why llama.cpp Native?
+- **Faster**: Direct C++ (no Python overhead).
+- **Light**: ~10MB binary vs bindings.
+- **Portable**: Easy mobile ports.
+
+Bunny: Hop to LLMs anywhere. 🚀
