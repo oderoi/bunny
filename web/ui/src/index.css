@@ -1,0 +1,27 @@
+:root{
+  --bg:#ffffff;
+  --fg:#111111;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+}
+html,body,#root{height:100%;}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";font-size:14px}
+
+/* Utilities */
+.muted{color:var(--muted)}
+.hairline{border:1px solid var(--border)}
+.rounded{border-radius:6px}
+.pill{border-radius:9999px}
+
+/* Minimal spinner */
+.spinner{width:16px;height:16px;border-radius:50%;border:2px solid #e5e7eb;border-top-color:#111;animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* Focus ring */
+:focus-visible{outline:2px solid #111; outline-offset:2px; border-radius:6px}
+
+/* Chat content basic markdown styles */
+.chat-content pre{background:rgba(0,0,0,0.35);padding:12px;border-radius:8px;overflow:auto;line-height:1.6}
+.chat-content code{background:rgba(0,0,0,0.25);padding:2px 4px;border-radius:4px}
+.chat-content p{margin:0 0 10px}
+

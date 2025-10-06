@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  bunny-ai:
+    build: .
+    container_name: bunny-ai
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persist models and data
+      - bunny_models:/app/.bunny/models
+      - bunny_data:/app/.bunny
+    environment:
+      - HF_HUB_TOKEN=${HF_HUB_TOKEN:-}
+      - BUNNY_HOME=/app/.bunny
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/server/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Resource limits (adjust based on your system)
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 2G
+
+  # Optional: Add a reverse proxy for SSL/HTTPS
+  nginx:
+    image: nginx:alpine
+    container_name: bunny-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - bunny-ai
+    restart: unless-stopped
+    profiles:
+      - proxy
+
+volumes:
+  bunny_models:
+    driver: local
+  bunny_data:
+    driver: local

@@ -1,0 +1,4 @@
+Usage: b [OPTIONS] COMMAND [ARGS]...
+Try 'b --help' for help.
+
+Error: No such command 'serve_ui'.

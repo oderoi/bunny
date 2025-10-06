@@ -1,0 +1,381 @@
+/* Mobile-optimized styles for Bunny AI */
+
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  /* Mobile app bar */
+  .mobile-app-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1100;
+    background: #1976d2;
+    color: white;
+  }
+
+  /* Mobile content area */
+  .mobile-content {
+    padding-top: 56px; /* App bar height */
+    padding-bottom: 56px; /* Bottom navigation height */
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Mobile bottom navigation */
+  .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1100;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  /* Mobile chat panel */
+  .mobile-chat-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Mobile model selector */
+  .mobile-model-selector {
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+    background: white;
+  }
+
+  /* Mobile chat messages */
+  .mobile-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background: #f5f5f5;
+  }
+
+  /* Mobile chat input */
+  .mobile-chat-input {
+    padding: 16px;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  /* Mobile model list */
+  .mobile-model-list {
+    padding: 16px;
+    background: white;
+  }
+
+  /* Mobile model card */
+  .mobile-model-card {
+    margin-bottom: 16px;
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+  }
+
+  /* Mobile progress bar */
+  .mobile-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+
+  .mobile-progress-fill {
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.3s ease;
+  }
+
+  /* Mobile buttons */
+  .mobile-button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-button-primary {
+    background: #1976d2;
+    color: white;
+  }
+
+  .mobile-button-secondary {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #e0e0e0;
+  }
+
+  .mobile-button-danger {
+    background: #f44336;
+    color: white;
+  }
+
+  /* Mobile drawer */
+  .mobile-drawer {
+    width: 280px;
+    background: white;
+  }
+
+  /* Mobile settings */
+  .mobile-settings {
+    padding: 16px;
+    background: white;
+  }
+
+  /* Mobile status indicators */
+  .mobile-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    margin: 8px 0;
+  }
+
+  .mobile-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4caf50;
+  }
+
+  .mobile-status-dot.error {
+    background: #f44336;
+  }
+
+  .mobile-status-dot.warning {
+    background: #ff9800;
+  }
+
+  /* Mobile snackbar */
+  .mobile-snackbar {
+    position: fixed;
+    bottom: 80px; /* Above bottom navigation */
+    left: 16px;
+    right: 16px;
+    z-index: 1200;
+  }
+
+  /* Mobile alerts */
+  .mobile-alert {
+    padding: 16px;
+    border-radius: 8px;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mobile-alert-success {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+  }
+
+  .mobile-alert-warning {
+    background: #fff3e0;
+    color: #f57c00;
+    border: 1px solid #ffcc02;
+  }
+
+  .mobile-alert-error {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+  }
+
+  /* Mobile form elements */
+  .mobile-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+  }
+
+  .mobile-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+  }
+
+  /* Mobile typography */
+  .mobile-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin: 16px 0;
+  }
+
+  .mobile-subtitle {
+    font-size: 18px;
+    font-weight: 500;
+    color: #666;
+    margin: 12px 0;
+  }
+
+  .mobile-body {
+    font-size: 16px;
+    color: #333;
+    line-height: 1.5;
+  }
+
+  .mobile-caption {
+    font-size: 14px;
+    color: #666;
+  }
+
+  /* Mobile spacing */
+  .mobile-spacing-xs { margin: 4px; }
+  .mobile-spacing-sm { margin: 8px; }
+  .mobile-spacing-md { margin: 16px; }
+  .mobile-spacing-lg { margin: 24px; }
+  .mobile-spacing-xl { margin: 32px; }
+
+  .mobile-padding-xs { padding: 4px; }
+  .mobile-padding-sm { padding: 8px; }
+  .mobile-padding-md { padding: 16px; }
+  .mobile-padding-lg { padding: 24px; }
+  .mobile-padding-xl { padding: 32px; }
+
+  /* Mobile utilities */
+  .mobile-hidden { display: none !important; }
+  .mobile-visible { display: block !important; }
+  .mobile-flex { display: flex !important; }
+  .mobile-grid { display: grid !important; }
+
+  .mobile-text-center { text-align: center; }
+  .mobile-text-left { text-align: left; }
+  .mobile-text-right { text-align: right; }
+
+  .mobile-full-width { width: 100% !important; }
+  .mobile-full-height { height: 100% !important; }
+
+  /* Mobile animations */
+  .mobile-fade-in {
+    animation: mobileFadeIn 0.3s ease-in-out;
+  }
+
+  .mobile-slide-up {
+    animation: mobileSlideUp 0.3s ease-in-out;
+  }
+
+  .mobile-slide-down {
+    animation: mobileSlideDown 0.3s ease-in-out;
+  }
+
+  @keyframes mobileFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes mobileSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes mobileSlideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .tablet-content {
+    padding: 16px;
+  }
+
+  .tablet-sidebar {
+    width: 250px;
+  }
+
+  .tablet-main {
+    flex: 1;
+    margin-left: 16px;
+  }
+}
+
+/* Desktop optimizations */
+@media (min-width: 1025px) {
+  .desktop-content {
+    padding: 24px;
+  }
+
+  .desktop-sidebar {
+    width: 300px;
+  }
+
+  .desktop-main {
+    flex: 1;
+    margin-left: 24px;
+  }
+}
+
+/* Touch-friendly elements */
+@media (hover: none) and (pointer: coarse) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-button {
+    padding: 12px 24px;
+    font-size: 16px;
+  }
+
+  .touch-input {
+    padding: 16px;
+    font-size: 16px;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .high-dpi-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .dark-mode {
+    background: #121212;
+    color: #ffffff;
+  }
+
+  .dark-mode-card {
+    background: #1e1e1e;
+    border: 1px solid #333;
+  }
+
+  .dark-mode-input {
+    background: #2e2e2e;
+    border: 1px solid #444;
+    color: #ffffff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-fade-in,
+  .mobile-slide-up,
+  .mobile-slide-down {
+    animation: none;
+  }
+}

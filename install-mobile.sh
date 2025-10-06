@@ -1,0 +1,203 @@
+#!/bin/bash
+# Bunny AI Mobile Installer
+# Supports: Android (Termux), iOS (iSH), Linux mobile devices
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+print_status() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+print_header() {
+    echo -e "${BLUE}=== $1 ===${NC}"
+}
+
+# Detect mobile platform
+detect_mobile_platform() {
+    if [[ -f /data/data/com.termux/files/usr/bin/termux-info ]]; then
+        PLATFORM="android-termux"
+    elif [[ -f /usr/bin/ish ]]; then
+        PLATFORM="ios-ish"
+    elif [[ -f /etc/alpine-release ]]; then
+        PLATFORM="alpine-mobile"
+    else
+        PLATFORM="linux-mobile"
+    fi
+    
+    print_status "Detected platform: $PLATFORM"
+}
+
+# Install dependencies for mobile platforms
+install_mobile_dependencies() {
+    print_header "Installing Mobile Dependencies"
+    
+    case $PLATFORM in
+        "android-termux")
+            print_status "Installing dependencies for Android (Termux)..."
+            pkg update
+            pkg install -y python git cmake clang make
+            ;;
+        "ios-ish")
+            print_status "Installing dependencies for iOS (iSH)..."
+            apk update
+            apk add python3 py3-pip git cmake make gcc musl-dev
+            ;;
+        "alpine-mobile")
+            print_status "Installing dependencies for Alpine mobile..."
+            apk update
+            apk add python3 py3-pip git cmake make gcc musl-dev
+            ;;
+        "linux-mobile")
+            print_status "Installing dependencies for Linux mobile..."
+            if command -v apt >/dev/null 2>&1; then
+                sudo apt update
+                sudo apt install -y python3 python3-pip git cmake build-essential
+            elif command -v pacman >/dev/null 2>&1; then
+                sudo pacman -S python python-pip git cmake base-devel
+            fi
+            ;;
+    esac
+}
+
+# Create mobile-optimized virtual environment
+setup_mobile_venv() {
+    print_header "Setting up Mobile-Optimized Environment"
+    
+    # Use smaller virtual environment
+    python3 -m venv --system-site-packages bunny_env
+    
+    source bunny_env/bin/activate
+    
+    # Install minimal dependencies for mobile
+    pip install --upgrade pip
+    pip install huggingface-hub click requests fastapi uvicorn
+    
+    print_status "Mobile environment ready"
+}
+
+# Build llama.cpp for mobile (CPU-only, optimized)
+build_mobile_llama() {
+    print_header "Building llama.cpp for Mobile"
+    
+    # Clone llama.cpp
+    if [[ ! -d "llama.cpp" ]]; then
+        print_status "Cloning llama.cpp..."
+        git clone https://github.com/ggerganov/llama.cpp.git
+    fi
+    
+    cd llama.cpp
+    git pull
+    
+    mkdir -p build
+    cd build
+    
+    # Mobile-optimized build (CPU-only, smaller binary)
+    cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DLLAMA_NATIVE=ON
+    
+    # Build with limited resources
+    make -j2
+    
+    cd ../..
+    print_status "Mobile llama.cpp built"
+}
+
+# Install Bunny with mobile optimizations
+install_mobile_bunny() {
+    print_header "Installing Bunny for Mobile"
+    
+    # Install in editable mode
+    pip install -e .
+    
+    # Create mobile-optimized config
+    mkdir -p ~/.bunny
+    cat > ~/.bunny/mobile_config.json << EOF
+{
+    "mobile_optimized": true,
+    "max_context": 1024,
+    "max_tokens": 512,
+    "low_memory_mode": true,
+    "battery_saver": true
+}
+EOF
+    
+    print_status "Bunny installed with mobile optimizations"
+}
+
+# Create mobile shortcuts
+create_mobile_shortcuts() {
+    print_header "Creating Mobile Shortcuts"
+    
+    # Create simple startup script
+    cat > start_bunny.sh << 'EOF'
+#!/bin/bash
+cd "$(dirname "$0")"
+source bunny_env/bin/activate
+echo "Starting Bunny AI..."
+b serve_ui --host 0.0.0.0 --port 8080
+EOF
+    chmod +x start_bunny.sh
+    
+    # Create chat script
+    cat > chat_bunny.sh << 'EOF'
+#!/bin/bash
+cd "$(dirname "$0")"
+source bunny_env/bin/activate
+echo "Starting Bunny Chat..."
+b run
+EOF
+    chmod +x chat_bunny.sh
+    
+    print_status "Mobile shortcuts created"
+}
+
+# Test mobile installation
+test_mobile_installation() {
+    print_header "Testing Mobile Installation"
+    
+    # Test CLI
+    if b --help >/dev/null 2>&1; then
+        print_status "Mobile CLI test passed"
+    else
+        print_warning "Mobile CLI test failed"
+        return 1
+    fi
+    
+    print_status "Mobile installation test completed"
+}
+
+# Main mobile installation
+main() {
+    print_header "Bunny AI Mobile Installer"
+    
+    detect_mobile_platform
+    install_mobile_dependencies
+    setup_mobile_venv
+    build_mobile_llama
+    install_mobile_bunny
+    create_mobile_shortcuts
+    test_mobile_installation
+    
+    print_header "Mobile Installation Complete!"
+    print_status "Bunny AI is ready for mobile use"
+    print_status ""
+    print_status "Usage:"
+    print_status "  ./start_bunny.sh          # Start web UI"
+    print_status "  ./chat_bunny.sh            # Start chat"
+    print_status "  b --help                   # Show help"
+    print_status ""
+    print_status "Web UI will be available at: http://localhost:8080"
+    print_status "Access from other devices on your network!"
+}
+
+# Run installation
+main "$@"

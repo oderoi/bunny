@@ -1,0 +1,126 @@
+#!/bin/bash
+# Bunny AI AUR Package Install Script
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+print_status() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+print_header() {
+    echo -e "${BLUE}=== $1 ===${NC}"
+}
+
+# Install dependencies
+install_dependencies() {
+    print_header "Installing Dependencies"
+    
+    # Install build dependencies
+    sudo pacman -S --needed python python-pip git cmake base-devel
+    
+    # Install Python dependencies
+    pip install --user huggingface-hub>=0.20.0 click>=8.1.0 requests>=2.28.0 fastapi uvicorn python-multipart
+    
+    print_status "Dependencies installed"
+}
+
+# Build llama.cpp
+build_llama_cpp() {
+    print_header "Building llama.cpp"
+    
+    # Clone llama.cpp
+    if [[ ! -d "llama.cpp" ]]; then
+        git clone https://github.com/ggerganov/llama.cpp.git
+    fi
+    
+    cd llama.cpp
+    git pull
+    
+    mkdir -p build
+    cd build
+    
+    # Configure and build
+    cmake .. -DCMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
+    
+    cd ../..
+    print_status "llama.cpp built"
+}
+
+# Install Bunny
+install_bunny() {
+    print_header "Installing Bunny AI"
+    
+    # Install Python package
+    pip install --user -e .
+    
+    # Create user directory
+    mkdir -p ~/.bunny/models
+    
+    print_status "Bunny AI installed"
+}
+
+# Create desktop integration
+create_desktop_integration() {
+    print_header "Creating Desktop Integration"
+    
+    # Create desktop entry
+    cat > ~/.local/share/applications/bunny-ai.desktop << EOF
+[Desktop Entry]
+Name=Bunny AI
+Comment=Local LLM Runner
+Exec=b serve_ui
+Icon=terminal
+Type=Application
+Categories=Development;Education;
+StartupNotify=true
+EOF
+    
+    # Create shell aliases
+    echo 'alias bunny="b"' >> ~/.bashrc
+    echo 'alias bunny-ui="b serve_ui"' >> ~/.bashrc
+    echo 'alias bunny-chat="b run"' >> ~/.bashrc
+    
+    if [[ -f ~/.zshrc ]]; then
+        echo 'alias bunny="b"' >> ~/.zshrc
+        echo 'alias bunny-ui="b serve_ui"' >> ~/.zshrc
+        echo 'alias bunny-chat="b run"' >> ~/.zshrc
+    fi
+    
+    print_status "Desktop integration created"
+}
+
+# Main installation
+main() {
+    print_header "Bunny AI AUR Installation"
+    
+    install_dependencies
+    build_llama_cpp
+    install_bunny
+    create_desktop_integration
+    
+    print_header "Installation Complete!"
+    print_status "Bunny AI has been installed via AUR"
+    print_status ""
+    print_status "Usage:"
+    print_status "  b --help                    # Show help"
+    print_status "  b list                      # List models"
+    print_status "  b pull <model>              # Download model"
+    print_status "  b run <model>               # Start chat"
+    print_status "  b serve_ui <model>          # Start web UI"
+    print_status ""
+    print_status "Web UI: http://localhost:8080"
+}
+
+# Run installation
+main "$@"

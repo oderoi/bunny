@@ -1,0 +1,80 @@
+name: bunny-ai
+base: core22
+version: '0.1.3'
+summary: Local LLM runner using native llama.cpp
+description: |
+  Bunny AI is a powerful local LLM runner that uses native llama.cpp
+  for maximum performance. It supports GGUF models from Hugging Face
+  and provides both CLI and web interfaces.
+  
+  Features:
+  - Native llama.cpp integration
+  - Hugging Face model support
+  - Web UI with mobile-friendly interface
+  - Cross-platform compatibility
+  - GPU acceleration support
+
+grade: stable
+confinement: strict
+
+parts:
+  bunny-ai:
+    plugin: python
+    source: .
+    python-packages:
+      - huggingface-hub>=0.20.0
+      - click>=8.1.0
+      - requests>=2.28.0
+      - fastapi
+      - uvicorn
+      - python-multipart
+    build-packages:
+      - git
+      - cmake
+      - build-essential
+      - libc6-dev
+    stage-packages:
+      - git
+      - cmake
+      - build-essential
+    override-build: |
+      # Clone and build llama.cpp
+      git clone https://github.com/ggerganov/llama.cpp.git $SNAPCRAFT_PART_INSTALL/llama.cpp
+      cd $SNAPCRAFT_PART_INSTALL/llama.cpp
+      mkdir build && cd build
+      cmake .. -DCMAKE_BUILD_TYPE=Release
+      make -j$(nproc)
+      
+      # Install Python package
+      cd $SNAPCRAFT_PART_SOURCE
+      pip install -e .
+
+apps:
+  bunny:
+    command: bin/b
+    plugs:
+      - network
+      - home
+      - removable-media
+    environment:
+      BUNNY_HOME: $SNAP_USER_DATA/.bunny
+      
+  bunny-web:
+    command: bin/b serve_ui
+    plugs:
+      - network
+      - home
+      - removable-media
+    environment:
+      BUNNY_HOME: $SNAP_USER_DATA/.bunny
+    daemon: simple
+    restart-condition: on-failure
+
+slots:
+  bunny-ai:
+    interface: content
+    content: bunny-ai
+    read:
+      - $SNAP_USER_DATA
+    write:
+      - $SNAP_USER_DATA
