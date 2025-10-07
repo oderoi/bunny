@@ -81,9 +81,7 @@ setup_mobile_venv() {
     # Install minimal dependencies for mobile
     pip install --upgrade pip setuptools wheel
     # Mobile/Alpine/iSH: avoid Rust-based pydantic-core by pinning to Pydantic v1
-    pip install "huggingface-hub>=0.20.0" click requests \
-        "fastapi==0.95.2" "starlette==0.27.0" "pydantic==1.10.13" \
-        "typing_extensions<4.7" "anyio<4" "sniffio<2" "uvicorn==0.23.2" "h11<0.15"
+    pip install -r requirements-mobile.txt
     
     print_status "Mobile environment ready"
 }

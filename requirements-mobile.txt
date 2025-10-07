@@ -1,0 +1,17 @@
+# Mobile-safe Python dependency pins (works on Alpine/iSH i386-musl)
+# Avoids Rust-based pydantic-core by pinning FastAPI stack to Pydantic v1
+
+huggingface-hub>=0.20.0
+click>=8.1.0
+requests>=2.28.0
+
+# Web stack (pydantic v1)
+fastapi==0.95.2
+starlette==0.27.0
+pydantic==1.10.13
+anyio<4
+sniffio<2
+h11<0.15
+# Needed for typing on older Pydantic
+typing_extensions<4.7
+

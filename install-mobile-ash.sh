@@ -50,9 +50,7 @@ python3 -m venv bunny_env
 echo "${BLUE}[→]${NC} Installing Python dependencies..."
 pip install --upgrade pip setuptools wheel
 # Pin FastAPI stack to Pydantic v1 to avoid Rust pydantic-core on musl/i386
-pip install "huggingface-hub>=0.20.0" click requests \
-    "fastapi==0.95.2" "starlette==0.27.0" "pydantic==1.10.13" \
-    "typing_extensions<4.7" "anyio<4" "sniffio<2" "uvicorn==0.23.2" "h11<0.15"
+pip install -r requirements-mobile.txt
 
 # Clone and build llama.cpp
 echo "${BLUE}[→]${NC} Building llama.cpp..."
