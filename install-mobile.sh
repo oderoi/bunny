@@ -92,12 +92,12 @@ build_mobile_llama() {
     
     # Clone llama.cpp
     if [[ ! -d "llama.cpp" ]]; then
-        print_status "Cloning llama.cpp..."
-        git clone https://github.com/ggerganov/llama.cpp.git
+        print_status "Cloning llama.cpp (shallow)..."
+        git clone --depth 1 --single-branch https://github.com/ggerganov/llama.cpp.git
     fi
     
     cd llama.cpp
-    git pull
+    git pull --ff-only || true
     
     mkdir -p build
     cd build
@@ -105,11 +105,16 @@ build_mobile_llama() {
     # Mobile-optimized build (CPU-only, smaller binary)
     # Set C++ compiler explicitly for mobile platforms
     export CXX=g++
-    # Disable CURL on ultra-minimal mobile environments
-    cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DCMAKE_CXX_COMPILER=g++
-    
-    # Build with limited resources
-    make -j2
+    # Skip if already built
+    if [[ -x ../bin/llama-server ]]; then
+        print_status "llama-server already built — skipping rebuild"
+    else
+        # Disable CURL on ultra-minimal mobile environments
+        cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=ON -DCMAKE_CXX_COMPILER=g++
+        
+        # Build with limited resources
+        make -j2
+    fi
     
     cd ../..
     print_status "Mobile llama.cpp built"

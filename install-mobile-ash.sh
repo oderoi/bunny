@@ -54,19 +54,24 @@ pip install -r requirements-mobile.txt
 
 # Clone and build llama.cpp
 echo "${BLUE}[→]${NC} Building llama.cpp..."
+# Shallow clone for speed
 if [ ! -d "llama.cpp" ]; then
-    git clone https://github.com/ggerganov/llama.cpp.git
+    git clone --depth 1 --single-branch https://github.com/ggerganov/llama.cpp.git
 fi
 
 cd llama.cpp
-git pull
+git pull --ff-only || true
 mkdir -p build
 cd build
 # Set C++ compiler explicitly for mobile platforms
 export CXX=g++
 # Disable CURL on ultra-minimal iOS environments
-cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DCMAKE_CXX_COMPILER=g++
-make -j2
+if [ -x ../bin/llama-server ]; then
+    echo "${GREEN}[✓]${NC} llama-server already built"
+else
+    cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=ON -DCMAKE_CXX_COMPILER=g++
+    make -j2
+fi
 cd ../..
 
 # Install Bunny package
