@@ -79,8 +79,11 @@ setup_mobile_venv() {
     source bunny_env/bin/activate
     
     # Install minimal dependencies for mobile
-    pip install --upgrade pip
-    pip install huggingface-hub click requests fastapi uvicorn
+    pip install --upgrade pip setuptools wheel
+    # Mobile/Alpine/iSH: avoid Rust-based pydantic-core by pinning to Pydantic v1
+    pip install "huggingface-hub>=0.20.0" click requests \
+        "fastapi==0.95.2" "starlette==0.27.0" "pydantic==1.10.13" \
+        "typing_extensions<4.7" "anyio<4" "sniffio<2" "uvicorn==0.23.2" "h11<0.15"
     
     print_status "Mobile environment ready"
 }
@@ -116,7 +119,8 @@ install_mobile_bunny() {
     print_header "Installing Bunny for Mobile"
     
     # Install in editable mode
-    pip install -e .
+    # Avoid build isolation so pip reuses installed build deps
+    PIP_NO_BUILD_ISOLATION=1 pip install -e .
     
     # Create mobile-optimized config
     mkdir -p ~/.bunny
