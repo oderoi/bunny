@@ -1,14 +1,14 @@
 #!/bin/sh
-# Bunny AI iOS Installer (iSH Shell Compatible)
-# Uses ash shell instead of bash for iOS compatibility
+# Bunny AI iOS Installer (Fixed for iSH Shell)
+# Handles iOS-specific build issues and Linux includes
 
 set -e
 
-# Colors for output (simplified for ash)
-RED='\033[0;31m'
+# Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 print_status() {
@@ -27,18 +27,13 @@ print_header() {
     echo "${BLUE}=== $1 ===${NC}"
 }
 
-# Check if command exists (ash compatible)
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
 # Install dependencies for iOS
 install_ios_dependencies() {
     print_header "Installing Dependencies for iOS"
     
     print_status "Installing dependencies for iOS (iSH Shell)..."
     apk update
-    apk add python3 py3-pip git cmake make gcc g++ musl-dev bash build-base curl-dev
+    apk add python3 py3-pip git cmake make gcc g++ musl-dev bash build-base curl-dev linux-headers
     
     print_status "Dependencies installed"
 }
@@ -56,8 +51,9 @@ setup_mobile_venv() {
     # Install minimal dependencies for mobile
     pip install --upgrade pip setuptools wheel
     # iSH (Alpine, i386-musl) cannot build pydantic-core (Rust). Pin FastAPI stack to Pydantic v1.
-    # Prefer requirements file to keep pins centralized
-    pip install -r requirements-mobile.txt
+    pip install "huggingface-hub>=0.20.0" click requests \
+        "fastapi==0.95.2" "starlette==0.27.0" "pydantic==1.10.13" \
+        "typing_extensions<4.7" "anyio<4" "sniffio<2" "uvicorn==0.23.2" "h11<0.15"
     
     print_status "Mobile environment ready"
 }
@@ -85,8 +81,8 @@ build_mobile_llama() {
         # Mobile-optimized build (CPU-only, smaller binary)
         # Set C++ compiler explicitly for iOS/iSH
         export CXX=g++
-        # iOS-specific flags to avoid Linux-specific includes
-        CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=ON -DCMAKE_CXX_COMPILER=g++ -DGGML_CCACHE=OFF -DLLAMA_HTTP=OFF"
+        # iOS-specific flags to avoid Linux-specific includes and HTTP features
+        CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DLLAMA_HTTP=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=ON -DCMAKE_CXX_COMPILER=g++ -DGGML_CCACHE=OFF"
         if command -v ccache >/dev/null 2>&1; then
             CMAKE_FLAGS="$CMAKE_FLAGS -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
         fi
@@ -165,7 +161,7 @@ test_mobile_installation() {
 
 # Main mobile installation
 main() {
-    print_header "Bunny AI iOS Installer"
+    print_header "Bunny AI iOS Installer (Fixed)"
     
     install_ios_dependencies
     setup_mobile_venv

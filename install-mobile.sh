@@ -109,8 +109,8 @@ build_mobile_llama() {
     if [[ -x ../bin/llama-server ]]; then
         print_status "llama-server already built — skipping rebuild"
     else
-        # Disable CURL on ultra-minimal mobile environments
-        cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=ON -DCMAKE_CXX_COMPILER=g++
+        # Disable CURL and HTTP on ultra-minimal mobile environments
+        cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DLLAMA_HTTP=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=ON -DCMAKE_CXX_COMPILER=g++
         
         # Build with limited resources
         make -j2
