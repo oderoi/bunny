@@ -28,7 +28,7 @@ fi
 echo "${BLUE}[→]${NC} Installing dependencies..."
 if [ "$PLATFORM" = "ios" ]; then
     apk update
-    apk add python3 py3-pip git cmake make gcc g++ musl-dev bash build-base
+    apk add python3 py3-pip git cmake make gcc g++ musl-dev bash build-base curl-dev
 elif [ "$PLATFORM" = "android" ]; then
     pkg update
     pkg install python git cmake clang make
@@ -64,7 +64,8 @@ mkdir -p build
 cd build
 # Set C++ compiler explicitly for mobile platforms
 export CXX=g++
-cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DLLAMA_NATIVE=ON -DCMAKE_CXX_COMPILER=g++
+# Disable CURL on ultra-minimal iOS environments
+cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DCMAKE_CXX_COMPILER=g++
 make -j2
 cd ../..
 

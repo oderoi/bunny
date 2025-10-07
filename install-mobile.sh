@@ -50,7 +50,7 @@ install_mobile_dependencies() {
         "ios-ish")
             print_status "Installing dependencies for iOS (iSH)..."
             apk update
-            apk add python3 py3-pip git cmake make gcc g++ musl-dev build-base
+            apk add python3 py3-pip git cmake make gcc g++ musl-dev build-base curl-dev
             ;;
         "alpine-mobile")
             print_status "Installing dependencies for Alpine mobile..."
@@ -105,7 +105,8 @@ build_mobile_llama() {
     # Mobile-optimized build (CPU-only, smaller binary)
     # Set C++ compiler explicitly for mobile platforms
     export CXX=g++
-    cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DLLAMA_NATIVE=ON -DCMAKE_CXX_COMPILER=g++
+    # Disable CURL on ultra-minimal mobile environments
+    cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DGGML_NATIVE=ON -DLLAMA_CURL=OFF -DCMAKE_CXX_COMPILER=g++
     
     # Build with limited resources
     make -j2
