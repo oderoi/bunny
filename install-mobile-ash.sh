@@ -28,7 +28,7 @@ fi
 echo "${BLUE}[→]${NC} Installing dependencies..."
 if [ "$PLATFORM" = "ios" ]; then
     apk update
-    apk add python3 py3-pip git cmake make gcc musl-dev bash
+    apk add python3 py3-pip git cmake make gcc g++ musl-dev bash build-base
 elif [ "$PLATFORM" = "android" ]; then
     pkg update
     pkg install python git cmake clang make
@@ -62,7 +62,9 @@ cd llama.cpp
 git pull
 mkdir -p build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DLLAMA_NATIVE=ON
+# Set C++ compiler explicitly for mobile platforms
+export CXX=g++
+cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DLLAMA_NATIVE=ON -DCMAKE_CXX_COMPILER=g++
 make -j2
 cd ../..
 

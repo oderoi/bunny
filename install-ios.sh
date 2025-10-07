@@ -38,7 +38,7 @@ install_ios_dependencies() {
     
     print_status "Installing dependencies for iOS (iSH Shell)..."
     apk update
-    apk add python3 py3-pip git cmake make gcc musl-dev bash
+    apk add python3 py3-pip git cmake make gcc g++ musl-dev bash build-base
     
     print_status "Dependencies installed"
 }
@@ -79,7 +79,9 @@ build_mobile_llama() {
     cd build
     
     # Mobile-optimized build (CPU-only, smaller binary)
-    cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DLLAMA_NATIVE=ON
+    # Set C++ compiler explicitly for iOS/iSH
+    export CXX=g++
+    cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DLLAMA_NATIVE=ON -DCMAKE_CXX_COMPILER=g++
     
     # Build with limited resources
     make -j2

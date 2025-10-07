@@ -45,17 +45,17 @@ install_mobile_dependencies() {
         "android-termux")
             print_status "Installing dependencies for Android (Termux)..."
             pkg update
-            pkg install -y python git cmake clang make
+            pkg install -y python git cmake clang clang++ make
             ;;
         "ios-ish")
             print_status "Installing dependencies for iOS (iSH)..."
             apk update
-            apk add python3 py3-pip git cmake make gcc musl-dev
+            apk add python3 py3-pip git cmake make gcc g++ musl-dev build-base
             ;;
         "alpine-mobile")
             print_status "Installing dependencies for Alpine mobile..."
             apk update
-            apk add python3 py3-pip git cmake make gcc musl-dev
+            apk add python3 py3-pip git cmake make gcc g++ musl-dev build-base
             ;;
         "linux-mobile")
             print_status "Installing dependencies for Linux mobile..."
@@ -103,7 +103,9 @@ build_mobile_llama() {
     cd build
     
     # Mobile-optimized build (CPU-only, smaller binary)
-    cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DLLAMA_NATIVE=ON
+    # Set C++ compiler explicitly for mobile platforms
+    export CXX=g++
+    cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel -DLLAMA_NATIVE=ON -DCMAKE_CXX_COMPILER=g++
     
     # Build with limited resources
     make -j2

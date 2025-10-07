@@ -155,11 +155,11 @@ install_dependencies() {
         "android")
             print_info "Installing dependencies for Android (Termux)..."
             pkg update
-            pkg install -y python git cmake clang
+            pkg install -y python git cmake clang clang++ make
             ;;
         "alpine")
             print_info "Installing dependencies for Alpine Linux..."
-            apk add --no-cache python3 py3-pip git cmake make gcc musl-dev linux-headers
+            apk add --no-cache python3 py3-pip git cmake make gcc g++ musl-dev build-base linux-headers
             ;;
     esac
 }
@@ -243,8 +243,9 @@ build_llama_cpp() {
             ;;
     esac
     
-    # Configure
-    cmake .. $CMAKE_ARGS
+    # Configure (set C++ compiler explicitly for mobile platforms)
+    export CXX=g++
+    cmake .. $CMAKE_ARGS -DCMAKE_CXX_COMPILER=g++
     
     # Build
     make -j$(nproc 2>/dev/null || echo 4)
