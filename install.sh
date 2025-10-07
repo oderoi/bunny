@@ -148,7 +148,7 @@ build_llama_cpp() {
     cd build
     
     # Configure build
-    CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
+    CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=OFF -DGGML_NATIVE=ON"
     
     case $PLATFORM in
         "macos")
